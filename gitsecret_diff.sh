@@ -39,7 +39,6 @@ function compare_with_sha()
 function compare_with_local()
 {
     echo "Compare $SHA1 with local"
-    reveal
     compare_with_sha ${SHA1}
 }
 
@@ -122,4 +121,6 @@ fi
 # Restore state
 git checkout ${ACTUAL_SHA}
 reveal
-popd
+if [[ ! -z ${WORKING_DIR} ]]; then
+    popd
+fi
