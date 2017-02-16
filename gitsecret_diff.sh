@@ -121,4 +121,6 @@ fi
 # Restore state
 git checkout ${ACTUAL_SHA}
 reveal
-popd
+if [[ ! -z ${WORKING_DIR} ]]; then
+    popd
+fi
