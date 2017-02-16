@@ -13,10 +13,12 @@ It makes use of the already existing [git secret changes](https://sobolevn.githu
 gitsecret_diff gitSha1 \[-s | --sha2] \[-w | --working-dir] \[-p | --password] \[-h | --help]
 
 ## Options
-  >  -s | --sha2         - Second commit sha2. If sha2 is provided then git-secret-diff will make a diff beetween sha1 and sha2
-  >  -w | --working-dir  - The working dir for the script to work.
-  >  -p | --password     - The password for git secret reveal
-  >  -h | --help         - Print help screen
+```
+  -s | --sha2         - Second commit sha2. If sha2 is provided then git-secret-diff will make a diff beetween sha1 and sha2
+  -w | --working-dir  - The working dir for the script to work.
+  -p | --password     - The password for git secret reveal
+  -h | --help         - Print help screen
+```
 
 ## Contributors
 
