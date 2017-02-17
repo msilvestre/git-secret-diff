@@ -6,11 +6,13 @@ PASSWORD=""
 SHA1=""
 SHA2=""
 WORKING_DIR=""
+FILENAMES=""
 
 function usage()
 {
-    echo "gitsecret_diff gitSha1 \n"\
-         "  -s | --sha2 <second commit sha to compare> \n"\
+    echo "gitsecret_diff [secret files to compare] \n"\
+         "  -a | --sha1 <first commit sha to compare> \n"
+         "  -b | --sha2 <second commit sha to compare> \n"\
          "  -p | --password <git secret password> \n"\
          "  -w | --working-dir <the working dir to run>\n"\
          "  -h | --help"
@@ -25,18 +27,28 @@ function reveal()
     fi
 }
 
-function compare_with_sha()
+function compare()
 {
-    git checkout $1
-
     if [[ -z ${PASSWORD} ]]; then
-        git secret changes
+        git secret changes ${FILENAMES}
     else
-        git secret changes -p ${PASSWORD}
+        git secret changes -p ${PASSWORD} ${FILENAMES}
     fi
 }
 
 function compare_with_local()
+{
+    compare
+}
+
+function compare_with_sha()
+{
+    git checkout $1
+
+    compare
+}
+
+function compare_sha_with_local()
 {
     echo "Compare $SHA1 with local"
     compare_with_sha ${SHA1}
@@ -52,8 +64,18 @@ function compare_with_other()
     compare_with_sha ${SHA2}
 }
 
+function check_modified_files()
+{
+    ACTUAL_SHA=`git rev-parse HEAD`
+    MODIFIED_FILES=`git ls-files -m`
+    if [[ ! -z ${MODIFIED_FILES} ]]; then
+        echo "The following files are modified:\n$MODIFIED_FILES\n\nPlease stash them or clean it in order to safely run this script."
+        exit 1
+    fi
+}
+
 # Parse arguments
-TEMP=$(getopt -n "$0" --options p:s:w:h --longoptions sha2:,password:,working-dir:,help -- $@)
+TEMP=$(getopt -n "$0" --options p:a:b:w:h --longoptions sha1:,sha2:,password:,working-dir:,help -- $@)
 # Die if they fat finger arguments, this program will be run as root
 [ $? = 0 ] || die "Error parsing arguments. gitsecret_diff --help"
 
@@ -67,7 +89,10 @@ while true; do
         -p|--password)
             PASSWORD=$2; shift 2
         ;;
-        -s|--sha2)
+        -a|--sha1)
+            SHA1=$2; shift 2
+        ;;
+        -b|--sha2)
             SHA2=$2; shift 2
         ;;
         -w|--working-dir)
@@ -90,14 +115,10 @@ while true; do
     esac
 done
 
-SHA1=$2;shift
+shift $((OPTIND-1))
+[ "$1" = '--' ] && shift
 
-# check for empty args
-if [[ $@ = '' ]]; then
-    echo "Please provide the sha to compare to!"
-    usage
-    exit 1
-fi
+FILENAMES=$@;shift
 
 eval set -- "$@"
 
@@ -105,17 +126,14 @@ if [[ ! -z ${WORKING_DIR} ]]; then
     pushd ${WORKING_DIR}
 fi
 
-ACTUAL_SHA=`git rev-parse HEAD`
-MODIFIED_FILES=`git ls-files -m`
-if [[ ! -z ${MODIFIED_FILES} ]]; then
-    echo "The following files are modified:\n$MODIFIED_FILES\n\nPlease stash them or clean it in order to safely run this script."
-    exit 1
-fi
-
-if [[ -z ${SHA2} ]]; then
-        compare_with_local
-    else
-        compare_with_other
+if [[ -z ${SHA1} ]]; then
+    compare_with_local
+elif [[ -z ${SHA2} ]]; then
+    check_modified_files
+    compare_sha_with_local
+else
+    check_modified_files
+    compare_with_other
 fi
 
 # Restore state
