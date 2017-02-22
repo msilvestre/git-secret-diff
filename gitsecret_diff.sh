@@ -79,7 +79,6 @@ function do_compare()
 
 function check_modified_files()
 {
-    ACTUAL_SHA=`git rev-parse HEAD`
     MODIFIED_FILES=`git ls-files -m`
     if [[ ! -z ${MODIFIED_FILES} ]]; then
         echo "The following files are modified:\n$MODIFIED_FILES\n\nPlease stash them or clean it in order to safely run this script."
@@ -89,6 +88,13 @@ function check_modified_files()
 
 get_initial_state()
 {
+    ACTUAL_SHA=$(git rev-parse --abbrev-ref HEAD)
+
+    if [[ "$ACTUAL_SHA" == "HEAD" ]]; then
+        echo "on Head"
+        ACTUAL_SHA=`git rev-parse HEAD`
+    fi
+
     if [[ ! -z ${WORKING_DIR} ]]; then
         pushd ${WORKING_DIR}
     fi
@@ -154,6 +160,7 @@ check_arguments()
 
     eval set -- "$@"
 }
+
 check_arguments "$@"
 get_initial_state
 do_compare
