@@ -15,29 +15,29 @@ function die()
 
 function usage()
 {
-    echo "gitsecret_diff [secret files to compare] \n"\
-         "  -a | --sha1 <first commit sha to compare> \n"\
-         "  -b | --sha2 <second commit sha to compare> \n"\
-         "  -p | --password <git secret password> \n"\
-         "  -w | --working-dir <the working dir to run>\n"\
-         "  -h | --help"
+    printf "gitsecret_diff [secret files to compare] \n\
+           -a | --sha1 <first commit sha to compare> \n\
+           -b | --sha2 <second commit sha to compare> \n\
+           -p | --password <git secret password> \n\
+           -w | --working-dir <the working dir to run>\n\
+           -h | --help\n"
 }
 
 function reveal()
 {
-    if [[ -z ${PASSWORD} ]]; then
+    if [[ -z "$PASSWORD" ]]; then
         git secret reveal
     else
-        git secret reveal -p ${PASSWORD}
+        git secret reveal -p "$PASSWORD"
     fi
 }
 
 function compare()
 {
-    if [[ -z ${PASSWORD} ]]; then
-        git secret changes ${FILENAMES}
+    if [[ -z "$PASSWORD" ]]; then
+        git secret changes "$FILENAMES"
     else
-        git secret changes -p ${PASSWORD} ${FILENAMES}
+        git secret changes -p "$PASSWORD" "$FILENAMES"
     fi
 }
 
@@ -48,7 +48,7 @@ function compare_with_local()
 
 function compare_with_sha()
 {
-    git checkout $1
+    git checkout "$1"
 
     compare
 }
@@ -56,24 +56,24 @@ function compare_with_sha()
 function compare_sha_with_local()
 {
     echo "Compare $SHA1 with local"
-    compare_with_sha ${SHA1}
+    compare_with_sha "$SHA1"
 }
 
 function compare_with_other()
 {
     echo "comparing revision $SHA1 with $SHA2"
 
-    git checkout ${SHA1}
+    git checkout "$SHA1"
     reveal
 
-    compare_with_sha ${SHA2}
+    compare_with_sha "$SHA2"
 }
 
 function do_compare()
 {
-    if [[ -z ${SHA1} ]]; then
+    if [[ -z "$SHA1" ]]; then
         compare_with_local
-    elif [[ -z ${SHA2} ]]; then
+    elif [[ -z "$SHA2" ]]; then
         check_modified_files
         compare_sha_with_local
     else
@@ -84,9 +84,9 @@ function do_compare()
 
 function check_modified_files()
 {
-    MODIFIED_FILES=`git ls-files -m`
-    if [[ ! -z ${MODIFIED_FILES} ]]; then
-        echo "The following files are modified:\n$MODIFIED_FILES\n\nPlease stash them or clean it in order to safely run this script."
+    MODIFIED_FILES=$(git ls-files -m)
+    if [[ ! -z "$MODIFIED_FILES" ]]; then
+        printf "The following files are modified:\n%s\n\nPlease stash them or clean it in order to safely run this script." "$MODIFIED_FILES"
         exit 1
     fi
 }
@@ -97,20 +97,20 @@ get_initial_state()
 
     if [[ "$ACTUAL_SHA" == "HEAD" ]]; then
         echo "on Head"
-        ACTUAL_SHA=`git rev-parse HEAD`
+        ACTUAL_SHA=$(git rev-parse HEAD)
     fi
 
-    if [[ ! -z ${WORKING_DIR} ]]; then
-        pushd ${WORKING_DIR}
+    if [[ ! -z "$WORKING_DIR" ]]; then
+        pushd "$WORKING_DIR"
     fi
 }
 
 restore_state()
 {
     # Restore state
-    git checkout ${ACTUAL_SHA}
+    git checkout "$ACTUAL_SHA"
     reveal
-    if [[ ! -z ${WORKING_DIR} ]]; then
+    if [[ ! -z "$WORKING_DIR" ]]; then
         popd
     fi
 }
@@ -118,11 +118,9 @@ restore_state()
 check_arguments()
 {
     # Parse arguments
-    TEMP=$(getopt -n "$0" --options p:a:b:w:h --longoptions sha1:,sha2:,password:,working-dir:,help -- $@)
-    # Die if they fat finger arguments, this program will be run as root
-    [ $? = 0 ] || die "Error parsing arguments. gitsecret_diff --help"
+    TEMP=$(getopt -n "$0" --options p:a:b:w:h --longoptions sha1:,sha2:,password:,working-dir:,help -- "$@")
 
-    eval set -- "${TEMP}"
+    eval set -- "$TEMP"
     while true; do
         case $1 in
             -h|--help)
@@ -162,21 +160,21 @@ check_arguments()
     SHA2_INFO="commit"
 
     if [[ -n "$SHA1" ]]; then
-        SHA1_INFO=$(git cat-file -t ${SHA1} 2>&1)
+        SHA1_INFO=$(git cat-file -t "$SHA1" 2>&1)
     fi
 
     if [[ -n "$SHA2" ]]; then
-        SHA2_INFO=$(git cat-file -t ${SHA2} 2>&1)
+        SHA2_INFO=$(git cat-file -t "$SHA2" 2>&1)
     fi
 
-    if [[ "${SHA1_INFO}" != "commit" || "${SHA2_INFO}" != "commit" ]]; then
+    if [[ "$SHA1_INFO" != "commit" || "$SHA2_INFO" != "commit" ]]; then
         die "Check that commits SHAs are valid."
     fi
 
     shift $((OPTIND-1))
     [ "$1" = '--' ] && shift
 
-    FILENAMES=$@;shift
+    FILENAMES=( $@ );shift
 
     eval set -- "$@"
 }
