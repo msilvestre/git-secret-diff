@@ -11,7 +11,7 @@ FILENAMES=""
 function usage()
 {
     echo "gitsecret_diff [secret files to compare] \n"\
-         "  -a | --sha1 <first commit sha to compare> \n"
+         "  -a | --sha1 <first commit sha to compare> \n"\
          "  -b | --sha2 <second commit sha to compare> \n"\
          "  -p | --password <git secret password> \n"\
          "  -w | --working-dir <the working dir to run>\n"\
@@ -64,6 +64,19 @@ function compare_with_other()
     compare_with_sha ${SHA2}
 }
 
+function do_compare()
+{
+    if [[ -z ${SHA1} ]]; then
+        compare_with_local
+    elif [[ -z ${SHA2} ]]; then
+        check_modified_files
+        compare_sha_with_local
+    else
+        check_modified_files
+        compare_with_other
+    fi
+}
+
 function check_modified_files()
 {
     ACTUAL_SHA=`git rev-parse HEAD`
@@ -74,71 +87,74 @@ function check_modified_files()
     fi
 }
 
-# Parse arguments
-TEMP=$(getopt -n "$0" --options p:a:b:w:h --longoptions sha1:,sha2:,password:,working-dir:,help -- $@)
-# Die if they fat finger arguments, this program will be run as root
-[ $? = 0 ] || die "Error parsing arguments. gitsecret_diff --help"
+get_initial_state()
+{
+    if [[ ! -z ${WORKING_DIR} ]]; then
+        pushd ${WORKING_DIR}
+    fi
+}
 
-eval set -- "${TEMP}"
-while true; do
-    case $1 in
-        -h|--help)
-            usage
-            exit 0
-        ;;
-        -p|--password)
-            PASSWORD=$2; shift 2
-        ;;
-        -a|--sha1)
-            SHA1=$2; shift 2
-        ;;
-        -b|--sha2)
-            SHA2=$2; shift 2
-        ;;
-        -w|--working-dir)
-            WORKING_DIR=$2; shift 2
-        ;;
-        --)
-            # no more arguments to parse
-            break
-        ;;
-        *)
-            printf "Unknown option %s\n" "$1"
-            usage
-            exit 1
-        ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            usage
-            exit 1
-        ;;
-    esac
-done
+restore_state()
+{
+    # Restore state
+    git checkout ${ACTUAL_SHA}
+    reveal
+    if [[ ! -z ${WORKING_DIR} ]]; then
+        popd
+    fi
+}
 
-shift $((OPTIND-1))
-[ "$1" = '--' ] && shift
+check_arguments()
+{
+    # Parse arguments
+    TEMP=$(getopt -n "$0" --options p:a:b:w:h --longoptions sha1:,sha2:,password:,working-dir:,help -- $@)
+    # Die if they fat finger arguments, this program will be run as root
+    [ $? = 0 ] || die "Error parsing arguments. gitsecret_diff --help"
 
-FILENAMES=$@;shift
+    eval set -- "${TEMP}"
+    while true; do
+        case $1 in
+            -h|--help)
+                usage
+                exit 0
+            ;;
+            -p|--password)
+                PASSWORD=$2; shift 2
+            ;;
+            -a|--sha1)
+                SHA1=$2; shift 2
+            ;;
+            -b|--sha2)
+                SHA2=$2; shift 2
+            ;;
+            -w|--working-dir)
+                WORKING_DIR=$2; shift 2
+            ;;
+            --)
+                # no more arguments to parse
+                break
+            ;;
+            *)
+                printf "Unknown option %s\n" "$1"
+                usage
+                exit 1
+            ;;
+            :)
+                echo "Option -$OPTARG requires an argument." >&2
+                usage
+                exit 1
+            ;;
+        esac
+    done
 
-eval set -- "$@"
+    shift $((OPTIND-1))
+    [ "$1" = '--' ] && shift
 
-if [[ ! -z ${WORKING_DIR} ]]; then
-    pushd ${WORKING_DIR}
-fi
+    FILENAMES=$@;shift
 
-if [[ -z ${SHA1} ]]; then
-    compare_with_local
-elif [[ -z ${SHA2} ]]; then
-    check_modified_files
-    compare_sha_with_local
-else
-    check_modified_files
-    compare_with_other
-fi
-
-# Restore state
-git checkout ${ACTUAL_SHA}
-reveal
-if [[ ! -z ${WORKING_DIR} ]]; then
-    popd
-fi
+    eval set -- "$@"
+}
+check_arguments "$@"
+get_initial_state
+do_compare
+restore_state
