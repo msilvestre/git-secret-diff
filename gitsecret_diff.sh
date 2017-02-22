@@ -153,6 +153,21 @@ check_arguments()
         esac
     done
 
+    SHA1_INFO="commit"
+    SHA2_INFO="commit"
+
+    if [[ -n "$SHA1" ]]; then
+        SHA1_INFO=$(git cat-file -t ${SHA1} 2>&1)
+    fi
+
+    if [[ -n "$SHA2" ]]; then
+        SHA2_INFO=$(git cat-file -t ${SHA2} 2>&1)
+    fi
+
+    if [[ "${SHA1_INFO}" != "commit" || "${SHA2_INFO}" != "commit" ]]; then
+        die "Check that commits SHAs are valid."
+    fi
+
     shift $((OPTIND-1))
     [ "$1" = '--' ] && shift
 
