@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
-die() { echo "$@" 1>&2 ; exit 1; }
-
 PASSWORD=""
 SHA1=""
 SHA2=""
 WORKING_DIR=""
 FILENAMES=""
+
+function die()
+{
+    echo "$@" 1>&2
+    usage
+    exit 1
+}
 
 function usage()
 {
