@@ -85,7 +85,7 @@ function do_compare()
 function check_modified_files()
 {
     MODIFIED_FILES=$(git ls-files -m)
-    if [[ ! -z "$MODIFIED_FILES" ]]; then
+    if [[ -n "$MODIFIED_FILES" ]]; then
         printf "The following files are modified:\n%s\n\nPlease stash them or clean it in order to safely run this script." "$MODIFIED_FILES"
         exit 1
     fi
@@ -100,7 +100,7 @@ get_initial_state()
         ACTUAL_SHA=$(git rev-parse HEAD)
     fi
 
-    if [[ ! -z "$WORKING_DIR" ]]; then
+    if [[ -n "$WORKING_DIR" ]]; then
         pushd "$WORKING_DIR"
     fi
 }
@@ -110,7 +110,7 @@ restore_state()
     # Restore state
     git checkout "$ACTUAL_SHA"
     reveal
-    if [[ ! -z "$WORKING_DIR" ]]; then
+    if [[ -n "$WORKING_DIR" ]]; then
         popd
     fi
 }
