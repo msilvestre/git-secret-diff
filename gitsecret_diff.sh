@@ -56,17 +56,22 @@ function compare_with_sha()
 function compare_sha_with_local()
 {
     echo "Compare $SHA1 with local"
+    get_initial_state
     compare_with_sha "$SHA1"
+    restore_state
 }
 
 function compare_with_other()
 {
     echo "comparing revision $SHA1 with $SHA2"
 
+    get_initial_state
+
     git checkout "$SHA1" > /dev/null 2>&1
     reveal
-
     compare_with_sha "$SHA2"
+
+    restore_state
 }
 
 function do_compare()
@@ -180,6 +185,4 @@ check_arguments()
 }
 
 check_arguments "$@"
-get_initial_state
 do_compare
-restore_state
