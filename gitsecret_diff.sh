@@ -161,6 +161,10 @@ check_arguments()
         esac
     done
 
+    if [[ -n "$SHA2" && -z "$SHA1" ]]; then
+        die "Please provide only SHA1 or SHA1 and SHA2"
+    fi
+
     SHA1_INFO="commit"
     SHA2_INFO="commit"
 
