@@ -48,7 +48,7 @@ function compare_with_local()
 
 function compare_with_sha()
 {
-    git checkout "$1"
+    git checkout "$1" > /dev/null 2>&1
 
     compare
 }
@@ -63,7 +63,7 @@ function compare_with_other()
 {
     echo "comparing revision $SHA1 with $SHA2"
 
-    git checkout "$SHA1"
+    git checkout "$SHA1" > /dev/null 2>&1
     reveal
 
     compare_with_sha "$SHA2"
@@ -108,7 +108,7 @@ get_initial_state()
 restore_state()
 {
     # Restore state
-    git checkout "$ACTUAL_SHA"
+    git checkout "$ACTUAL_SHA" > /dev/null 2>&1
     reveal
     if [[ -n "$WORKING_DIR" ]]; then
         popd
