@@ -101,7 +101,6 @@ get_initial_state()
     ACTUAL_SHA=$(git rev-parse --abbrev-ref HEAD)
 
     if [[ "$ACTUAL_SHA" == "HEAD" ]]; then
-        echo "on Head"
         ACTUAL_SHA=$(git rev-parse HEAD)
     fi
 
