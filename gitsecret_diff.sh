@@ -109,7 +109,7 @@ restore_state()
 {
     # Restore state
     git checkout "$ACTUAL_SHA" > /dev/null 2>&1
-    reveal
+    reveal > /dev/null 2>&1
     if [[ -n "$WORKING_DIR" ]]; then
         popd
     fi
